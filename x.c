@@ -14,6 +14,7 @@
 #include <X11/keysym.h>
 #include <X11/Xft/Xft.h>
 #include <X11/XKBlib.h>
+#include <X11/extensions/Xrender.h>
 
 char *argv0;
 #include "arg.h"
@@ -92,10 +93,10 @@ typedef struct {
 } TermWindow;
 
 typedef struct {
-	Display *dpy;
-	Colormap cmap;
-	Window win;
-	Drawable buf;
+    Display *dpy;
+    Colormap cmap;
+    Window win;
+    Drawable buf;
 	GlyphFontSpec *specbuf; /* font spec buffer used for rendering */
 	Atom xembed, wmdeletewin, netwmname, netwmiconname, netwmpid;
 	struct {
@@ -107,11 +108,13 @@ typedef struct {
 	Draw draw;
 	Visual *vis;
 	XSetWindowAttributes attrs;
-	int scr;
-	int isfixed; /* is fixed geometry? */
-	int l, t; /* left and top offset */
-	int gm; /* geometry mask */
+    int scr;
+    int isfixed; /* is fixed geometry? */
+    int l, t; /* left and top offset */
+    int gm; /* geometry mask */
 } XWindow;
+
+static int xdepth = 0; /* window depth (possibly 32 for ARGB) */
 
 typedef struct {
 	Atom xtarget;
@@ -165,6 +168,7 @@ static void xunloadfont(Font *);
 static void xunloadfonts(void);
 static void xsetenv(void);
 static void xseturgency(int);
+static int  xloadvisual(void);
 static int evcol(XEvent *);
 static int evrow(XEvent *);
 
@@ -305,6 +309,34 @@ xapplyopacity(void)
     unsigned long value = (unsigned long)(winopacity * 0xfffffffful);
     XChangeProperty(xw.dpy, xw.win, prop, XA_CARDINAL, 32, PropModeReplace,
                     (unsigned char *)&value, 1);
+}
+
+int
+xloadvisual(void)
+{
+    XVisualInfo tpl = { .screen = 0, .depth = 32, .class = TrueColor };
+    XVisualInfo *infos;
+    int nitems;
+    int i;
+
+    tpl.screen = xw.scr;
+    infos = XGetVisualInfo(xw.dpy, VisualScreenMask | VisualDepthMask | VisualClassMask,
+                           &tpl, &nitems);
+    if (!infos)
+        return 0;
+    for (i = 0; i < nitems; i++) {
+        XRenderPictFormat *fmt = XRenderFindVisualFormat(xw.dpy, infos[i].visual);
+        if (fmt && fmt->type == PictTypeDirect && fmt->direct.alphaMask) {
+            xw.vis = infos[i].visual;
+            xdepth = 32;
+            xw.cmap = XCreateColormap(xw.dpy, XRootWindow(xw.dpy, xw.scr), xw.vis, None);
+            xw.attrs.colormap = xw.cmap;
+            XFree(infos);
+            return 1;
+        }
+    }
+    XFree(infos);
+    return 0;
 }
 
 void
@@ -838,14 +870,14 @@ cresize(int width, int height)
 void
 xresize(int col, int row)
 {
-	win.tw = col * win.cw;
-	win.th = row * win.ch;
+    win.tw = col * win.cw;
+    win.th = row * win.ch;
 
-	XFreePixmap(xw.dpy, xw.buf);
-	xw.buf = XCreatePixmap(xw.dpy, xw.win, win.w, win.h,
-			DefaultDepth(xw.dpy, xw.scr));
-	XftDrawChange(xw.draw, xw.buf);
-	xclear(0, 0, win.w, win.h);
+    XFreePixmap(xw.dpy, xw.buf);
+    xw.buf = XCreatePixmap(xw.dpy, xw.win, win.w, win.h,
+                xdepth ? xdepth : DefaultDepth(xw.dpy, xw.scr));
+    XftDrawChange(xw.draw, xw.buf);
+    xclear(0, 0, win.w, win.h);
 
 	/* resize to new width */
 	xw.specbuf = xrealloc(xw.specbuf, col * sizeof(GlyphFontSpec));
@@ -884,9 +916,9 @@ xloadcolor(int i, const char *name, Color *ncolor)
 void
 xloadcols(void)
 {
-	int i;
-	static int loaded;
-	Color *cp;
+    int i;
+    static int loaded;
+    Color *cp;
 
 	if (loaded) {
 		for (cp = dc.col; cp < &dc.col[dc.collen]; ++cp)
@@ -896,14 +928,16 @@ xloadcols(void)
 		dc.col = xmalloc(dc.collen * sizeof(Color));
 	}
 
-	for (i = 0; i < dc.collen; i++)
-		if (!xloadcolor(i, NULL, &dc.col[i])) {
-			if (colorname[i])
-				die("could not allocate color '%s'\n", colorname[i]);
-			else
-				die("could not allocate color %d\n", i);
-		}
-	loaded = 1;
+    for (i = 0; i < dc.collen; i++)
+        if (!xloadcolor(i, NULL, &dc.col[i])) {
+            if (colorname[i])
+                die("could not allocate color '%s'\n", colorname[i]);
+            else
+                die("could not allocate color %d\n", i);
+        }
+    /* apply per-pixel alpha to background if supported */
+    dc.col[defaultbg].color.alpha = (unsigned short)(0xffff * winopacity);
+    loaded = 1;
 }
 
 int
@@ -922,7 +956,7 @@ xgetcolor(int x, unsigned char *r, unsigned char *g, unsigned char *b)
 int
 xsetcolorname(int x, const char *name)
 {
-	Color ncolor;
+    Color ncolor;
 
 	if (!BETWEEN(x, 0, dc.collen - 1))
 		return 1;
@@ -930,10 +964,12 @@ xsetcolorname(int x, const char *name)
 	if (!xloadcolor(x, name, &ncolor))
 		return 1;
 
-	XftColorFree(xw.dpy, xw.vis, xw.cmap, &dc.col[x]);
-	dc.col[x] = ncolor;
+    XftColorFree(xw.dpy, xw.vis, xw.cmap, &dc.col[x]);
+    dc.col[x] = ncolor;
+    if (x == (int)defaultbg)
+        dc.col[x].color.alpha = (unsigned short)(0xffff * winopacity);
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -1220,16 +1256,21 @@ xicdestroy(XIC xim, XPointer client, XPointer call)
 void
 xinit(int cols, int rows)
 {
-	XGCValues gcvalues;
-	Cursor cursor;
-	Window parent, root;
-	pid_t thispid = getpid();
-	XColor xmousefg, xmousebg;
+    XGCValues gcvalues;
+    Cursor cursor;
+    Window parent, root;
+    pid_t thispid = getpid();
+    XColor xmousefg, xmousebg;
 
-	if (!(xw.dpy = XOpenDisplay(NULL)))
-		die("can't open display\n");
-	xw.scr = XDefaultScreen(xw.dpy);
-	xw.vis = XDefaultVisual(xw.dpy, xw.scr);
+    if (!(xw.dpy = XOpenDisplay(NULL)))
+        die("can't open display\n");
+    xw.scr = XDefaultScreen(xw.dpy);
+    xw.vis = XDefaultVisual(xw.dpy, xw.scr);
+    xdepth = DefaultDepth(xw.dpy, xw.scr);
+    /* Try to switch to ARGB visual for per-pixel alpha */
+    if (!xloadvisual()) {
+        xw.cmap = 0; /* will fill with default below */
+    }
 
 	/* font */
 	if (!FcInit())
@@ -1238,9 +1279,10 @@ xinit(int cols, int rows)
 	usedfont = (opt_font == NULL)? font : opt_font;
 	xloadfonts(usedfont, 0);
 
-	/* colors */
-	xw.cmap = XDefaultColormap(xw.dpy, xw.scr);
-	xloadcols();
+    /* colors */
+    if (!xw.cmap)
+        xw.cmap = XDefaultColormap(xw.dpy, xw.scr);
+    xloadcols();
 
 	/* adjust fixed window geometry */
 	win.w = 2 * borderpx + cols * win.cw;
@@ -1262,10 +1304,11 @@ xinit(int cols, int rows)
 	root = XRootWindow(xw.dpy, xw.scr);
 	if (!(opt_embed && (parent = strtol(opt_embed, NULL, 0))))
 		parent = root;
-	xw.win = XCreateWindow(xw.dpy, root, xw.l, xw.t,
-			win.w, win.h, 0, XDefaultDepth(xw.dpy, xw.scr), InputOutput,
-			xw.vis, CWBackPixel | CWBorderPixel | CWBitGravity
-			| CWEventMask | CWColormap, &xw.attrs);
+    xw.win = XCreateWindow(xw.dpy, root, xw.l, xw.t,
+                win.w, win.h, 0,
+                xdepth, InputOutput,
+                xw.vis, CWBackPixel | CWBorderPixel | CWBitGravity
+                | CWEventMask | CWColormap, &xw.attrs);
     if (parent != root)
         XReparentWindow(xw.dpy, xw.win, parent, xw.l, xw.t);
 
@@ -1287,11 +1330,11 @@ xinit(int cols, int rows)
     /* apply initial opacity if compositor honors _NET_WM_WINDOW_OPACITY */
     xapplyopacity();
 
-	/* input methods */
-	if (!ximopen(xw.dpy)) {
-		XRegisterIMInstantiateCallback(xw.dpy, NULL, NULL, NULL,
-	                                       ximinstantiate, NULL);
-	}
+    /* input methods */
+    if (!ximopen(xw.dpy)) {
+        XRegisterIMInstantiateCallback(xw.dpy, NULL, NULL, NULL,
+                                       ximinstantiate, NULL);
+    }
 
 	/* white cursor, black outline */
 	cursor = XCreateFontCursor(xw.dpy, mouseshape);
