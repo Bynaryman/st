@@ -94,6 +94,66 @@ char *termname = "st-256color";
 unsigned int tabspaces = 8;
 
 /* Terminal colors (16 first used in escape sequence) */
+/* Modus palettes (Vivendi/Operandi) for runtime toggle */
+static const char *colorname_modus_vivendi[] = {
+    /* 8 normal colors */
+    "#000000", /* black */
+    "#ff5f59", /* red */
+    "#44bc44", /* green */
+    "#d0bc00", /* yellow */
+    "#2fafff", /* blue */
+    "#feacd0", /* magenta */
+    "#00d3d0", /* cyan */
+    "#ffffff", /* white */
+
+    /* 8 bright colors */
+    "#595959", /* bright black */
+    "#ff6b55", /* bright red */
+    "#00c06f", /* bright green */
+    "#fec43f", /* bright yellow */
+    "#79a8ff", /* bright blue */
+    "#b6a0ff", /* bright magenta */
+    "#6ae4b9", /* bright cyan */
+    "#ffffff", /* bright white */
+
+    [255] = 0,
+
+    /* defaults block (indices 256..259) */
+    "#e6e6e6", /* 256: cursor color (light on dark) */
+    "#555555", /* 257: reverse cursor */
+    "#ffffff", /* 258: default fg */
+    "#000000", /* 259: default bg */
+};
+
+static const char *colorname_modus_operandi[] = {
+    /* 8 normal colors */
+    "#000000", /* black */
+    "#a60000", /* red */
+    "#006800", /* green */
+    "#6f5500", /* yellow */
+    "#0031a9", /* blue */
+    "#721045", /* magenta */
+    "#005e8b", /* cyan */
+    "#ffffff", /* white */
+
+    /* 8 bright colors */
+    "#595959", /* bright black */
+    "#972500", /* bright red */
+    "#00663f", /* bright green */
+    "#884900", /* bright yellow */
+    "#3548cf", /* bright blue */
+    "#531ab6", /* bright magenta */
+    "#005f5f", /* bright cyan */
+    "#ffffff", /* bright white */
+
+    [255] = 0,
+
+    /* defaults block (indices 256..259) */
+    "#000000", /* 256: cursor color (dark on light) */
+    "#999999", /* 257: reverse cursor */
+    "#000000", /* 258: default fg */
+    "#ffffff", /* 259: default bg */
+};
 static const char *colorname[] = {
 	/* 8 normal colors */
 	"black",
@@ -201,6 +261,7 @@ static Shortcut shortcuts[] = {
 	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
 	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
 	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
+	{ MODKEY,               XK_F5,          toggletheme,    {.i =  0} },
 };
 
 /*

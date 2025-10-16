@@ -59,6 +59,7 @@ static void zoom(const Arg *);
 static void zoomabs(const Arg *);
 static void zoomreset(const Arg *);
 static void ttysend(const Arg *);
+static void toggletheme(const Arg *);
 
 /* config.h for applying patches and the configuration. */
 #include "config.h"
@@ -253,6 +254,23 @@ static char *opt_name  = NULL;
 static char *opt_title = NULL;
 
 static uint buttons; /* bit field of pressed buttons */
+static int thememode = 1; /* 1: vivendi (dark) active; 0: operandi (light) */
+
+static void
+applypalette(const char **pal)
+{
+    int i;
+    /* 16 ANSI colors */
+    for (i = 0; i < 16; i++)
+        xsetcolorname(i, pal[i]);
+    /* Defaults at 256..259 */
+    for (i = 256; i <= 259; i++)
+        xsetcolorname(i, pal[i]);
+
+    /* Clear and redraw with the new background */
+    xclear(0, 0, win.w, win.h);
+    redraw();
+}
 
 void
 clipcopy(const Arg *dummy)
@@ -326,6 +344,18 @@ void
 ttysend(const Arg *arg)
 {
 	ttywrite(arg->s, strlen(arg->s), 1);
+}
+
+void
+toggletheme(const Arg *arg)
+{
+    (void)arg;
+    thememode = !thememode;
+    if (thememode) {
+        applypalette(colorname_modus_vivendi);
+    } else {
+        applypalette(colorname_modus_operandi);
+    }
 }
 
 int
