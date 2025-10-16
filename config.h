@@ -118,11 +118,11 @@ static const char *colorname_modus_vivendi[] = {
 
     [255] = 0,
 
-    /* defaults block (indices 256..259) */
+    /* defaults block (indices 256..259) — use Tinted bg */
     "#e6e6e6", /* 256: cursor color (light on dark) */
     "#555555", /* 257: reverse cursor */
-    "#ffffff", /* 258: default fg */
-    "#000000", /* 259: default bg */
+    "#ffffff", /* 258: default fg (vivendi fg-main) */
+    "#0d0e1c", /* 259: default bg (vivendi-tinted bg-main) */
 };
 
 static const char *colorname_modus_operandi[] = {
@@ -148,40 +148,40 @@ static const char *colorname_modus_operandi[] = {
 
     [255] = 0,
 
-    /* defaults block (indices 256..259) */
+    /* defaults block (indices 256..259) — use Tinted bg */
     "#000000", /* 256: cursor color (dark on light) */
     "#999999", /* 257: reverse cursor */
-    "#000000", /* 258: default fg */
-    "#ffffff", /* 259: default bg */
+    "#000000", /* 258: default fg (operandi fg-main) */
+    "#fbf7f0", /* 259: default bg (operandi-tinted bg-main) */
 };
 static const char *colorname[] = {
-	/* 8 normal colors (Modus Vivendi by default) */
-	"#000000",
-	"#ff5f59",
-	"#44bc44",
-	"#d0bc00",
-	"#2fafff",
-	"#feacd0",
-	"#00d3d0",
-	"#ffffff",
+    /* 8 normal colors (Modus Vivendi by default) */
+    "#000000",
+    "#ff5f59",
+    "#44bc44",
+    "#d0bc00",
+    "#2fafff",
+    "#feacd0",
+    "#00d3d0",
+    "#ffffff",
 
-	/* 8 bright colors */
-	"#595959",
-	"#ff6b55",
-	"#00c06f",
-	"#fec43f",
-	"#79a8ff",
-	"#b6a0ff",
-	"#6ae4b9",
-	"#ffffff",
+    /* 8 bright colors */
+    "#595959",
+    "#ff6b55",
+    "#00c06f",
+    "#fec43f",
+    "#79a8ff",
+    "#b6a0ff",
+    "#6ae4b9",
+    "#ffffff",
 
-	[255] = 0,
+    [255] = 0,
 
-	/* defaults (256..259) matching Vivendi */
-	"#e6e6e6", /* 256: cursor */
-	"#555555", /* 257: reverse cursor */
-	"#ffffff", /* 258: default fg */
-	"#000000", /* 259: default bg */
+    /* defaults (256..259) matching Vivendi-Tinted */
+    "#e6e6e6", /* 256: cursor */
+    "#555555", /* 257: reverse cursor */
+    "#ffffff", /* 258: default fg */
+    "#0d0e1c", /* 259: default bg */
 };
 
 
