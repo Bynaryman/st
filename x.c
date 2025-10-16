@@ -60,6 +60,9 @@ static void zoomabs(const Arg *);
 static void zoomreset(const Arg *);
 static void ttysend(const Arg *);
 static void toggletheme(const Arg *);
+static void togglevariant(const Arg *);
+static void randomtheme(const Arg *);
+static void opacchange(const Arg *);
 
 /* config.h for applying patches and the configuration. */
 #include "config.h"
@@ -254,7 +257,9 @@ static char *opt_name  = NULL;
 static char *opt_title = NULL;
 
 static uint buttons; /* bit field of pressed buttons */
-static int thememode = 1; /* 1: vivendi (dark) active; 0: operandi (light) */
+static int thememode = 1;    /* 1: vivendi (dark); 0: operandi (light) */
+static int themevariant = 1; /* 1: tinted; 0: base */
+static double winopacity = 1.0; /* 0..1 */
 
 static void
 applypalette(const char **pal)
@@ -270,6 +275,24 @@ applypalette(const char **pal)
     /* Clear and redraw with the new background */
     xclear(0, 0, win.w, win.h);
     redraw();
+}
+
+static const char **
+currentpalette(void)
+{
+    if (thememode) /* dark */
+        return themevariant ? colorname_modus_vivendi_tinted : colorname_modus_vivendi;
+    else /* light */
+        return themevariant ? colorname_modus_operandi_tinted : colorname_modus_operandi;
+}
+
+static void
+xapplyopacity(void)
+{
+    Atom prop = XInternAtom(xw.dpy, "_NET_WM_WINDOW_OPACITY", False);
+    unsigned long value = (unsigned long)(winopacity * 0xfffffffful);
+    XChangeProperty(xw.dpy, xw.win, prop, XA_CARDINAL, 32, PropModeReplace,
+                    (unsigned char *)&value, 1);
 }
 
 void
@@ -351,11 +374,37 @@ toggletheme(const Arg *arg)
 {
     (void)arg;
     thememode = !thememode;
-    if (thememode) {
-        applypalette(colorname_modus_vivendi);
-    } else {
-        applypalette(colorname_modus_operandi);
-    }
+    applypalette(currentpalette());
+}
+
+void
+togglevariant(const Arg *arg)
+{
+    (void)arg;
+    themevariant = !themevariant;
+    applypalette(currentpalette());
+}
+
+void
+randomtheme(const Arg *arg)
+{
+    (void)arg;
+    struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts);
+    unsigned seed = (unsigned)(ts.tv_nsec ^ ts.tv_sec);
+    srand(seed);
+    thememode = rand() & 1;
+    themevariant = rand() & 1;
+    applypalette(currentpalette());
+}
+
+void
+opacchange(const Arg *arg)
+{
+    double d = arg->f;
+    winopacity += d;
+    if (winopacity < 0.1) winopacity = 0.1;
+    if (winopacity > 1.0) winopacity = 1.0;
+    xapplyopacity();
 }
 
 int

@@ -154,34 +154,76 @@ static const char *colorname_modus_operandi[] = {
     "#000000", /* 258: default fg (operandi fg-main) */
     "#fbf7f0", /* 259: default bg (operandi-tinted bg-main) */
 };
-static const char *colorname[] = {
-    /* 8 normal colors (Modus Vivendi by default) */
-    "#000000",
-    "#ff5f59",
-    "#44bc44",
-    "#d0bc00",
-    "#2fafff",
-    "#feacd0",
-    "#00d3d0",
-    "#ffffff",
+
+/* Tinted variants */
+static const char *colorname_modus_vivendi_tinted[] = {
+    /* 8 normal colors */
+    "#0d0e1c", /* black (bg-main tinted) */
+    "#ff5f59", /* red */
+    "#44bc44", /* green */
+    "#d0bc00", /* yellow */
+    "#2fafff", /* blue */
+    "#feacd0", /* magenta */
+    "#00d3d0", /* cyan */
+    "#ffffff", /* white (fg-main) */
 
     /* 8 bright colors */
-    "#595959",
-    "#ff6b55",
-    "#00c06f",
-    "#fec43f",
-    "#79a8ff",
-    "#b6a0ff",
-    "#6ae4b9",
-    "#ffffff",
+    "#595959", /* bright black */
+    "#ff6b55", /* bright red */
+    "#11c777", /* bright green (tinted variant) */
+    "#fec43f", /* bright yellow */
+    "#79a8ff", /* bright blue */
+    "#b6a0ff", /* bright magenta */
+    "#6ae4b9", /* bright cyan */
+    "#ffffff", /* bright white */
 
     [255] = 0,
 
-    /* defaults (256..259) matching Vivendi-Tinted */
-    "#e6e6e6", /* 256: cursor */
+    /* defaults block (indices 256..259) */
+    "#e6e6e6", /* 256: cursor color */
     "#555555", /* 257: reverse cursor */
     "#ffffff", /* 258: default fg */
     "#0d0e1c", /* 259: default bg */
+};
+
+static const char *colorname_modus_operandi_tinted[] = {
+    /* 8 normal colors */
+    "#fbf7f0", /* black (bg-main tinted) */
+    "#a60000", /* red */
+    "#006300", /* green (tinted variant) */
+    "#6d5000", /* yellow (tinted variant) */
+    "#0031a9", /* blue */
+    "#721045", /* magenta */
+    "#00598b", /* cyan (tinted variant) */
+    "#000000", /* white (fg-main) */
+
+    /* 8 bright colors */
+    "#595959", /* bright black */
+    "#972500", /* bright red */
+    "#00603f", /* bright green (tinted variant) */
+    "#894000", /* bright yellow (tinted variant) */
+    "#3546c2", /* bright blue (tinted variant) */
+    "#531ab6", /* bright magenta */
+    "#005f5f", /* bright cyan */
+    "#ffffff", /* bright white */
+
+    [255] = 0,
+
+    /* defaults block (indices 256..259) */
+    "#000000", /* 256: cursor color */
+    "#999999", /* 257: reverse cursor */
+    "#000000", /* 258: default fg */
+    "#fbf7f0", /* 259: default bg */
+};
+static const char *colorname[] = {
+    /* Start with Modus Vivendi Tinted */
+    "#0d0e1c", "#ff5f59", "#44bc44", "#d0bc00",
+    "#2fafff", "#feacd0", "#00d3d0", "#ffffff",
+    /* bright */
+    "#595959", "#ff6b55", "#11c777", "#fec43f",
+    "#79a8ff", "#b6a0ff", "#6ae4b9", "#ffffff",
+    [255] = 0,
+    "#e6e6e6", "#555555", "#ffffff", "#0d0e1c",
 };
 
 
@@ -260,8 +302,14 @@ static Shortcut shortcuts[] = {
 	{ TERMMOD,              XK_V,           clippaste,      {.i =  0} },
 	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
 	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
-	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
-	{ MODKEY,               XK_F5,          toggletheme,    {.i =  0} },
+    { TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
+    { MODKEY,               XK_F5,          toggletheme,    {.i =  0} },
+    { MODKEY,               XK_F4,          togglevariant,  {.i =  0} },
+    { MODKEY,               XK_F6,          randomtheme,    {.i =  0} },
+    { MODKEY,               XK_minus,       opacchange,     {.f = -0.05} },
+    { MODKEY,               XK_plus,        opacchange,     {.f = +0.05} },
+    { MODKEY,               XK_KP_Subtract, opacchange,     {.f = -0.05} },
+    { MODKEY,               XK_KP_Add,      opacchange,     {.f = +0.05} },
 };
 
 /*
