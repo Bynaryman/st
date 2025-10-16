@@ -155,33 +155,33 @@ static const char *colorname_modus_operandi[] = {
     "#ffffff", /* 259: default bg */
 };
 static const char *colorname[] = {
-	/* 8 normal colors */
-	"black",
-	"red3",
-	"green3",
-	"yellow3",
-	"blue2",
-	"magenta3",
-	"cyan3",
-	"gray90",
+	/* 8 normal colors (Modus Vivendi by default) */
+	"#000000",
+	"#ff5f59",
+	"#44bc44",
+	"#d0bc00",
+	"#2fafff",
+	"#feacd0",
+	"#00d3d0",
+	"#ffffff",
 
 	/* 8 bright colors */
-	"gray50",
-	"red",
-	"green",
-	"yellow",
-	"#5c5cff",
-	"magenta",
-	"cyan",
-	"white",
+	"#595959",
+	"#ff6b55",
+	"#00c06f",
+	"#fec43f",
+	"#79a8ff",
+	"#b6a0ff",
+	"#6ae4b9",
+	"#ffffff",
 
 	[255] = 0,
 
-	/* more colors can be added after 255 to use with DefaultXX */
-	"#cccccc",
-	"#555555",
-	"gray90", /* default foreground colour */
-	"black", /* default background colour */
+	/* defaults (256..259) matching Vivendi */
+	"#e6e6e6", /* 256: cursor */
+	"#555555", /* 257: reverse cursor */
+	"#ffffff", /* 258: default fg */
+	"#000000", /* 259: default bg */
 };
 
 
