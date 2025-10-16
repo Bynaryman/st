@@ -215,6 +215,56 @@ static const char *colorname_modus_operandi_tinted[] = {
     "#000000", /* 258: default fg */
     "#fbf7f0", /* 259: default bg */
 };
+
+/* Deuteranopia variants */
+static const char *colorname_modus_vivendi_deuteranopia[] = {
+    /* 8 normal colors */
+    "#000000", "#ff5f59", "#44bc44", "#cabf00",
+    "#2fafff", "#feacd0", "#00d3d0", "#ffffff",
+    /* 8 bright */
+    "#595959", "#ff6b55", "#00c06f", "#ffa00f",
+    "#79a8ff", "#b6a0ff", "#6ae4b9", "#ffffff",
+    [255] = 0,
+    /* defaults */
+    "#e6e6e6", "#555555", "#ffffff", "#000000",
+};
+
+static const char *colorname_modus_operandi_deuteranopia[] = {
+    /* 8 normal colors */
+    "#ffffff", "#a60000", "#006800", "#695500",
+    "#0031a9", "#721045", "#005e8b", "#000000",
+    /* 8 bright */
+    "#595959", "#972500", "#00663f", "#973300",
+    "#3548cf", "#531ab6", "#005f5f", "#ffffff",
+    [255] = 0,
+    /* defaults */
+    "#000000", "#999999", "#000000", "#ffffff",
+};
+
+/* Tritanopia variants */
+static const char *colorname_modus_vivendi_tritanopia[] = {
+    /* 8 normal colors */
+    "#000000", "#ff5f59", "#44bc44", "#cabf00",
+    "#2fafff", "#feacd0", "#00d3d0", "#ffffff",
+    /* 8 bright */
+    "#595959", "#ff6740", "#00c06f", "#ffa00f",
+    "#79a8ff", "#b6a0ff", "#6ae4b9", "#ffffff",
+    [255] = 0,
+    /* defaults */
+    "#e6e6e6", "#555555", "#ffffff", "#000000",
+};
+
+static const char *colorname_modus_operandi_tritanopia[] = {
+    /* 8 normal colors */
+    "#ffffff", "#a60000", "#006800", "#695500",
+    "#0031a9", "#721045", "#005e8b", "#000000",
+    /* 8 bright */
+    "#595959", "#b21100", "#00663f", "#973300",
+    "#3548cf", "#531ab6", "#005f5f", "#ffffff",
+    [255] = 0,
+    /* defaults */
+    "#000000", "#999999", "#000000", "#ffffff",
+};
 static const char *colorname[] = {
     /* Start with Modus Vivendi Tinted */
     "#0d0e1c", "#ff5f59", "#44bc44", "#d0bc00",
@@ -307,7 +357,10 @@ static Shortcut shortcuts[] = {
     { MODKEY,               XK_F4,          togglevariant,  {.i =  0} },
     { MODKEY,               XK_F6,          randomtheme,    {.i =  0} },
     { MODKEY,               XK_minus,       opacchange,     {.f = -0.05} },
+    { MODKEY|ShiftMask,     XK_minus,       opacchange,     {.f = -0.05} },
     { MODKEY,               XK_plus,        opacchange,     {.f = +0.05} },
+    { MODKEY|ShiftMask,     XK_plus,        opacchange,     {.f = +0.05} },
+    { MODKEY|ShiftMask,     XK_equal,       opacchange,     {.f = +0.05} },
     { MODKEY,               XK_KP_Subtract, opacchange,     {.f = -0.05} },
     { MODKEY,               XK_KP_Add,      opacchange,     {.f = +0.05} },
 };

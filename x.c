@@ -258,7 +258,7 @@ static char *opt_title = NULL;
 
 static uint buttons; /* bit field of pressed buttons */
 static int thememode = 1;    /* 1: vivendi (dark); 0: operandi (light) */
-static int themevariant = 1; /* 1: tinted; 0: base */
+static int themevariant = 1; /* 0: base, 1: tinted, 2: deuteranopia, 3: tritanopia */
 static double winopacity = 1.0; /* 0..1 */
 
 static void
@@ -280,10 +280,22 @@ applypalette(const char **pal)
 static const char **
 currentpalette(void)
 {
-    if (thememode) /* dark */
-        return themevariant ? colorname_modus_vivendi_tinted : colorname_modus_vivendi;
-    else /* light */
-        return themevariant ? colorname_modus_operandi_tinted : colorname_modus_operandi;
+    if (thememode) { /* dark */
+        switch (themevariant) {
+        case 0: return colorname_modus_vivendi;
+        case 1: return colorname_modus_vivendi_tinted;
+        case 2: return colorname_modus_vivendi_deuteranopia;
+        case 3: return colorname_modus_vivendi_tritanopia;
+        }
+    } else { /* light */
+        switch (themevariant) {
+        case 0: return colorname_modus_operandi;
+        case 1: return colorname_modus_operandi_tinted;
+        case 2: return colorname_modus_operandi_deuteranopia;
+        case 3: return colorname_modus_operandi_tritanopia;
+        }
+    }
+    return colorname_modus_vivendi;
 }
 
 static void
@@ -381,7 +393,7 @@ void
 togglevariant(const Arg *arg)
 {
     (void)arg;
-    themevariant = !themevariant;
+    themevariant = (themevariant + 1) & 3;
     applypalette(currentpalette());
 }
 
@@ -1254,8 +1266,8 @@ xinit(int cols, int rows)
 			win.w, win.h, 0, XDefaultDepth(xw.dpy, xw.scr), InputOutput,
 			xw.vis, CWBackPixel | CWBorderPixel | CWBitGravity
 			| CWEventMask | CWColormap, &xw.attrs);
-	if (parent != root)
-		XReparentWindow(xw.dpy, xw.win, parent, xw.l, xw.t);
+    if (parent != root)
+        XReparentWindow(xw.dpy, xw.win, parent, xw.l, xw.t);
 
 	memset(&gcvalues, 0, sizeof(gcvalues));
 	gcvalues.graphics_exposures = False;
@@ -1269,8 +1281,11 @@ xinit(int cols, int rows)
 	/* font spec buffer */
 	xw.specbuf = xmalloc(cols * sizeof(GlyphFontSpec));
 
-	/* Xft rendering context */
-	xw.draw = XftDrawCreate(xw.dpy, xw.buf, xw.vis, xw.cmap);
+    /* Xft rendering context */
+    xw.draw = XftDrawCreate(xw.dpy, xw.buf, xw.vis, xw.cmap);
+
+    /* apply initial opacity if compositor honors _NET_WM_WINDOW_OPACITY */
+    xapplyopacity();
 
 	/* input methods */
 	if (!ximopen(xw.dpy)) {
