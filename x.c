@@ -15,6 +15,7 @@
 #include <X11/Xft/Xft.h>
 #include <X11/XKBlib.h>
 #include <X11/extensions/Xrender.h>
+#include <X11/Xresource.h>
 
 char *argv0;
 #include "arg.h"
@@ -168,6 +169,7 @@ static void xloadfonts(const char *, double);
 static void xunloadfont(Font *);
 static void xunloadfonts(void);
 static void xsetenv(void);
+static void sigusr1(int);
 static void xseturgency(int);
 static int  xloadvisual(void);
 static int evcol(XEvent *);
@@ -266,6 +268,45 @@ static int thememode = 1;    /* 1: vivendi (dark); 0: operandi (light) */
 static int themevariant = 1; /* 0: base, 1: tinted, 2: deuteranopia, 3: tritanopia */
 static double winopacity = 1.0; /* 0..1 */
 static int fontcycle_index = 0;
+
+/* Xresources loader */
+static void
+xrdb_load(void)
+{
+    XrmInitialize();
+    char *resm;
+    XrmDatabase db;
+    resm = XResourceManagerString(xw.dpy);
+    if (!resm)
+        return;
+    db = XrmGetStringDatabase(resm);
+    if (!db)
+        return;
+    for (size_t i = 0; i < sizeof(resources)/sizeof(resources[0]); i++) {
+        ResourcePref *r = &resources[i];
+        char fullname[128], classpath[128];
+        /* Only honor namespaced resources to avoid global color0.. leaks */
+        snprintf(fullname, sizeof(fullname), "st.%s", r->name);
+        snprintf(classpath, sizeof(classpath), "St.%s", r->name);
+        XrmValue v;
+        char *type = NULL;
+        if (XrmGetResource(db, fullname, classpath, &type, &v)) {
+            if (v.addr == NULL)
+                continue;
+            switch (r->type) {
+            case STRING:
+                *(char **)r->dst = xstrdup((char *)v.addr);
+                break;
+            case INTEGER:
+                *(int *)r->dst = strtoul((char *)v.addr, NULL, 10);
+                break;
+            case FLOAT:
+                winopacity = strtod((char *)v.addr, NULL);
+                break;
+            }
+        }
+    }
+}
 
 static void
 applypalette(const char **pal)
@@ -1303,6 +1344,8 @@ xinit(int cols, int rows)
             break;
         }
     }
+    /* Xresources overrides */
+    xrdb_load();
     xloadfonts(usedfont, 0);
 
     /* colors */
@@ -1771,10 +1814,12 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
 void
 xsetenv(void)
 {
-	char buf[sizeof(long) * 8 + 1];
+    char buf[sizeof(long) * 8 + 1];
 
-	snprintf(buf, sizeof(buf), "%lu", xw.win);
-	setenv("WINDOWID", buf, 1);
+    snprintf(buf, sizeof(buf), "%lu", xw.win);
+    setenv("WINDOWID", buf, 1);
+    snprintf(buf, sizeof(buf), "%lu", (unsigned long)getpid());
+    setenv("ST_PID", buf, 1);
 }
 
 void
@@ -2206,7 +2251,9 @@ main(int argc, char *argv[])
 	xw.isfixed = False;
 	xsetcursor(cursorshape);
 
-	ARGBEGIN {
+    signal(SIGUSR1, sigusr1);
+
+    ARGBEGIN {
 	case 'a':
 		allowaltscreen = 0;
 		break;
@@ -2268,4 +2315,12 @@ run:
 	run();
 
 	return 0;
+}
+static void
+sigusr1(int sig)
+{
+    (void)sig;
+    xrdb_load();
+    xloadcols();
+    redraw();
 }
