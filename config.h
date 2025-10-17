@@ -5,7 +5,7 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
+static char *font = "Terminus:style=Regular:pixelsize=14:antialias=false:autohint=false";
 static int borderpx = 2;
 
 /*
@@ -343,9 +343,9 @@ static MouseShortcut mshortcuts[] = {
  * You can add/remove entries freely.
  */
 static const char *cyclefonts[] = {
-    "PxPlus IBM VGA8:pixelsize=16:antialias=false",
     "Terminus:style=Regular:pixelsize=14:antialias=false:autohint=false",
-    "JetBrainsMono Nerd Font:size=12:antialias=true:autohint=true",
+    "MesloLGS Nerd Font Mono:size=12:antialias=true:autohint=true",
+    "Liberation Mono:pixelsize=12:antialias=true:autohint=true",
 };
 static const int ncyclefonts = sizeof(cyclefonts) / sizeof(cyclefonts[0]);
 
