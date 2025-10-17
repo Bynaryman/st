@@ -64,6 +64,7 @@ static void toggletheme(const Arg *);
 static void togglevariant(const Arg *);
 static void randomtheme(const Arg *);
 static void opacchange(const Arg *);
+static void cyclefont(const Arg *);
 
 /* config.h for applying patches and the configuration. */
 #include "config.h"
@@ -264,6 +265,7 @@ static uint buttons; /* bit field of pressed buttons */
 static int thememode = 1;    /* 1: vivendi (dark); 0: operandi (light) */
 static int themevariant = 1; /* 0: base, 1: tinted, 2: deuteranopia, 3: tritanopia */
 static double winopacity = 1.0; /* 0..1 */
+static int fontcycle_index = 0;
 
 static void
 applypalette(const char **pal)
@@ -329,7 +331,7 @@ xloadvisual(void)
         if (fmt && fmt->type == PictTypeDirect && fmt->direct.alphaMask) {
             xw.vis = infos[i].visual;
             xdepth = 32;
-            xw.cmap = XCreateColormap(xw.dpy, XRootWindow(xw.dpy, xw.scr), xw.vis, None);
+            xw.cmap = XCreateColormap(xw.dpy, XRootWindow(xw.dpy, xw.scr), xw.vis, AllocNone);
             xw.attrs.colormap = xw.cmap;
             XFree(infos);
             return 1;
@@ -419,6 +421,24 @@ toggletheme(const Arg *arg)
     (void)arg;
     thememode = !thememode;
     applypalette(currentpalette());
+}
+
+void
+cyclefont(const Arg *arg)
+{
+    int step = arg ? arg->i : 1;
+    if (ncyclefonts <= 0)
+        return;
+    fontcycle_index = (fontcycle_index + step) % ncyclefonts;
+    if (fontcycle_index < 0)
+        fontcycle_index += ncyclefonts;
+
+    usedfont = (char *)cyclefonts[fontcycle_index];
+    xunloadfonts();
+    xloadfonts(usedfont, 0);
+    cresize(0, 0);
+    redraw();
+    xhints();
 }
 
 void
@@ -1276,8 +1296,14 @@ xinit(int cols, int rows)
 	if (!FcInit())
 		die("could not init fontconfig.\n");
 
-	usedfont = (opt_font == NULL)? font : opt_font;
-	xloadfonts(usedfont, 0);
+    usedfont = (opt_font == NULL)? font : opt_font;
+    for (int i = 0; i < ncyclefonts; ++i) {
+        if (strcmp(usedfont, cyclefonts[i]) == 0) {
+            fontcycle_index = i;
+            break;
+        }
+    }
+    xloadfonts(usedfont, 0);
 
     /* colors */
     if (!xw.cmap)
@@ -1316,16 +1342,16 @@ xinit(int cols, int rows)
 	gcvalues.graphics_exposures = False;
 	dc.gc = XCreateGC(xw.dpy, xw.win, GCGraphicsExposures,
 			&gcvalues);
-	xw.buf = XCreatePixmap(xw.dpy, xw.win, win.w, win.h,
-			DefaultDepth(xw.dpy, xw.scr));
-	XSetForeground(xw.dpy, dc.gc, dc.col[defaultbg].pixel);
-	XFillRectangle(xw.dpy, xw.buf, dc.gc, 0, 0, win.w, win.h);
+    xw.buf = XCreatePixmap(xw.dpy, xw.win, win.w, win.h,
+            xdepth ? xdepth : DefaultDepth(xw.dpy, xw.scr));
 
-	/* font spec buffer */
-	xw.specbuf = xmalloc(cols * sizeof(GlyphFontSpec));
+    /* font spec buffer */
+    xw.specbuf = xmalloc(cols * sizeof(GlyphFontSpec));
 
     /* Xft rendering context */
     xw.draw = XftDrawCreate(xw.dpy, xw.buf, xw.vis, xw.cmap);
+    /* Clear backing pixmap via Xft now that draw is ready */
+    xclear(0, 0, win.w, win.h);
 
     /* apply initial opacity if compositor honors _NET_WM_WINDOW_OPACITY */
     xapplyopacity();

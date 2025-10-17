@@ -337,6 +337,18 @@ static MouseShortcut mshortcuts[] = {
 	{ XK_ANY_MOD,           Button5, ttysend,        {.s = "\005"} },
 };
 
+/*
+ * Font cycling: list of font patterns to cycle at runtime.
+ * First entry should match the default `font` above for a predictable start.
+ * You can add/remove entries freely.
+ */
+static const char *cyclefonts[] = {
+    "PxPlus IBM VGA8:pixelsize=16:antialias=false",
+    "Terminus:style=Regular:pixelsize=14:antialias=false:autohint=false",
+    "JetBrainsMono Nerd Font:size=12:antialias=true:autohint=true",
+};
+static const int ncyclefonts = sizeof(cyclefonts) / sizeof(cyclefonts[0]);
+
 /* Internal keyboard shortcuts. */
 #define MODKEY Mod1Mask
 #define TERMMOD (ControlMask|ShiftMask)
@@ -385,6 +397,9 @@ static Shortcut shortcuts[] = {
     { MODKEY,               XK_l,           externalpipe,   {.v = openurlcmd } },
     { MODKEY,               XK_y,           externalpipe,   {.v = copyurlcmd } },
     { MODKEY,               XK_o,           externalpipe,   {.v = copyoutput } },
+    /* Cycle fonts at runtime */
+    { MODKEY,               XK_F7,          cyclefont,      {.i = -1} },
+    { MODKEY,               XK_F8,          cyclefont,      {.i = +1} },
 };
 
 /*
