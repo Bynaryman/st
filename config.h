@@ -157,8 +157,8 @@ static const char *colorname_modus_operandi[] = {
 
 /* Tinted variants */
 static const char *colorname_modus_vivendi_tinted[] = {
-    /* 8 normal colors */
-    "#0d0e1c", /* black (bg-main tinted) */
+    /* 8 normal colors (keep ANSI black truly black) */
+    "#000000", /* black */
     "#ff5f59", /* red */
     "#44bc44", /* green */
     "#d0bc00", /* yellow */
@@ -187,8 +187,8 @@ static const char *colorname_modus_vivendi_tinted[] = {
 };
 
 static const char *colorname_modus_operandi_tinted[] = {
-    /* 8 normal colors */
-    "#fbf7f0", /* black (bg-main tinted) */
+    /* 8 normal colors (keep ANSI black truly black) */
+    "#000000", /* black */
     "#a60000", /* red */
     "#006300", /* green (tinted variant) */
     "#6d5000", /* yellow (tinted variant) */
