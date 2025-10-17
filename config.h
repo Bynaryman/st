@@ -339,6 +339,11 @@ static MouseShortcut mshortcuts[] = {
 #define MODKEY Mod1Mask
 #define TERMMOD (ControlMask|ShiftMask)
 
+/* External pipe helpers (dmenu URL opener/copy, copy output) */
+static char *openurlcmd[] = { "/bin/sh", "-c", "st-urlhandler -o", "externalpipe", NULL };
+static char *copyurlcmd[] = { "/bin/sh", "-c", "st-urlhandler -c", "externalpipe", NULL };
+static char *copyoutput[] = { "/bin/sh", "-c", "st-copyout", "externalpipe", NULL };
+
 static Shortcut shortcuts[] = {
 	/* mask                 keysym          function        argument */
 	{ XK_ANY_MOD,           XK_Break,       sendbreak,      {.i =  0} },
@@ -348,9 +353,11 @@ static Shortcut shortcuts[] = {
 	{ TERMMOD,              XK_Prior,       zoom,           {.f = +1} },
 	{ TERMMOD,              XK_Next,        zoom,           {.f = -1} },
 	{ TERMMOD,              XK_Home,        zoomreset,      {.f =  0} },
-	{ TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
-	{ TERMMOD,              XK_V,           clippaste,      {.i =  0} },
-	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
+    { TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
+    { TERMMOD,              XK_V,           clippaste,      {.i =  0} },
+    { MODKEY,               XK_v,           clippaste,      {.i =  0} },
+    { TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
+    { ShiftMask,            XK_Insert,      clippaste,      {.i =  0} },
 	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
     { TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
     { MODKEY,               XK_F5,          toggletheme,    {.i =  0} },
@@ -363,6 +370,9 @@ static Shortcut shortcuts[] = {
     { MODKEY|ShiftMask,     XK_equal,       opacchange,     {.f = +0.05} },
     { MODKEY,               XK_KP_Subtract, opacchange,     {.f = -0.05} },
     { MODKEY,               XK_KP_Add,      opacchange,     {.f = +0.05} },
+    { MODKEY,               XK_l,           externalpipe,   {.v = openurlcmd } },
+    { MODKEY,               XK_y,           externalpipe,   {.v = copyurlcmd } },
+    { MODKEY,               XK_o,           externalpipe,   {.v = copyoutput } },
 };
 
 /*
