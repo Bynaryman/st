@@ -1,0 +1,24 @@
+! Modus Operandi Deuteranopia (base)
+st.theme: operandi-deuteranopia
+st.foreground: #000000
+st.background: #ffffff
+st.cursorColor: #000000
+st.alpha: 0.95
+
+st.color0:  #000000
+st.color1:  #a60000
+st.color2:  #006800
+st.color3:  #695500
+st.color4:  #0031a9
+st.color5:  #721045
+st.color6:  #005e8b
+st.color7:  #000000
+st.color8:  #595959
+st.color9:  #972500
+st.color10: #00663f
+st.color11: #973300
+st.color12: #3548cf
+st.color13: #531ab6
+st.color14: #005f5f
+st.color15: #ffffff
+

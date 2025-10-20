@@ -1,0 +1,24 @@
+! Modus Operandi (tinted) minimal set for st
+st.theme: operandi
+st.foreground: #000000
+st.background: #fbf7f0
+st.cursorColor: #000000
+st.alpha: 0.95
+
+st.color0:  #000000
+st.color1:  #a60000
+st.color2:  #006300
+st.color3:  #6d5000
+st.color4:  #0031a9
+st.color5:  #721045
+st.color6:  #00598b
+st.color7:  #ffffff
+st.color8:  #595959
+st.color9:  #972500
+st.color10: #00603f
+st.color11: #894000
+st.color12: #3546c2
+st.color13: #531ab6
+st.color14: #005f5f
+st.color15: #ffffff
+

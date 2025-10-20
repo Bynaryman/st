@@ -61,9 +61,6 @@ static void zoom(const Arg *);
 static void zoomabs(const Arg *);
 static void zoomreset(const Arg *);
 static void ttysend(const Arg *);
-static void toggletheme(const Arg *);
-static void togglevariant(const Arg *);
-static void randomtheme(const Arg *);
 static void opacchange(const Arg *);
 static void cyclefont(const Arg *);
 
@@ -264,8 +261,6 @@ static char *opt_name  = NULL;
 static char *opt_title = NULL;
 
 static uint buttons; /* bit field of pressed buttons */
-static int thememode = 1;    /* 1: vivendi (dark); 0: operandi (light) */
-static int themevariant = 1; /* 0: base, 1: tinted, 2: deuteranopia, 3: tritanopia */
 static double winopacity = 1.0; /* 0..1 */
 static int fontcycle_index = 0;
 
@@ -308,42 +303,6 @@ xrdb_load(void)
     }
 }
 
-static void
-applypalette(const char **pal)
-{
-    int i;
-    /* 16 ANSI colors */
-    for (i = 0; i < 16; i++)
-        xsetcolorname(i, pal[i]);
-    /* Defaults at 256..259 */
-    for (i = 256; i <= 259; i++)
-        xsetcolorname(i, pal[i]);
-
-    /* Clear and redraw with the new background */
-    xclear(0, 0, win.w, win.h);
-    redraw();
-}
-
-static const char **
-currentpalette(void)
-{
-    if (thememode) { /* dark */
-        switch (themevariant) {
-        case 0: return colorname_modus_vivendi;
-        case 1: return colorname_modus_vivendi_tinted;
-        case 2: return colorname_modus_vivendi_deuteranopia;
-        case 3: return colorname_modus_vivendi_tritanopia;
-        }
-    } else { /* light */
-        switch (themevariant) {
-        case 0: return colorname_modus_operandi;
-        case 1: return colorname_modus_operandi_tinted;
-        case 2: return colorname_modus_operandi_deuteranopia;
-        case 3: return colorname_modus_operandi_tritanopia;
-        }
-    }
-    return colorname_modus_vivendi;
-}
 
 static void
 xapplyopacity(void)
@@ -457,14 +416,6 @@ ttysend(const Arg *arg)
 }
 
 void
-toggletheme(const Arg *arg)
-{
-    (void)arg;
-    thememode = !thememode;
-    applypalette(currentpalette());
-}
-
-void
 cyclefont(const Arg *arg)
 {
     int step = arg ? arg->i : 1;
@@ -482,25 +433,6 @@ cyclefont(const Arg *arg)
     xhints();
 }
 
-void
-togglevariant(const Arg *arg)
-{
-    (void)arg;
-    themevariant = (themevariant + 1) & 3;
-    applypalette(currentpalette());
-}
-
-void
-randomtheme(const Arg *arg)
-{
-    (void)arg;
-    struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts);
-    unsigned seed = (unsigned)(ts.tv_nsec ^ ts.tv_sec);
-    srand(seed);
-    thememode = rand() & 1;
-    themevariant = rand() & 1;
-    applypalette(currentpalette());
-}
 
 void
 opacchange(const Arg *arg)

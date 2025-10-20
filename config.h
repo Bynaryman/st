@@ -94,186 +94,34 @@ char *termname = "st-256color";
 unsigned int tabspaces = 8;
 
 /* Terminal colors (16 first used in escape sequence) */
-/* Modus palettes (Vivendi/Operandi) for runtime toggle */
-static const char *colorname_modus_vivendi[] = {
-    /* 8 normal colors */
-    "#000000", /* black */
-    "#ff5f59", /* red */
-    "#44bc44", /* green */
-    "#d0bc00", /* yellow */
-    "#2fafff", /* blue */
-    "#feacd0", /* magenta */
-    "#00d3d0", /* cyan */
-    "#ffffff", /* white */
-
-    /* 8 bright colors */
-    "#595959", /* bright black */
-    "#ff6b55", /* bright red */
-    "#00c06f", /* bright green */
-    "#fec43f", /* bright yellow */
-    "#79a8ff", /* bright blue */
-    "#b6a0ff", /* bright magenta */
-    "#6ae4b9", /* bright cyan */
-    "#ffffff", /* bright white */
-
-    [255] = 0,
-
-    /* defaults block (indices 256..259) — use Tinted bg */
-    "#e6e6e6", /* 256: cursor color (light on dark) */
-    "#555555", /* 257: reverse cursor */
-    "#ffffff", /* 258: default fg (vivendi fg-main) */
-    "#0d0e1c", /* 259: default bg (vivendi-tinted bg-main) */
-};
-
-static const char *colorname_modus_operandi[] = {
-    /* 8 normal colors */
-    "#000000", /* black */
-    "#a60000", /* red */
-    "#006800", /* green */
-    "#6f5500", /* yellow */
-    "#0031a9", /* blue */
-    "#721045", /* magenta */
-    "#005e8b", /* cyan */
-    "#ffffff", /* white */
-
-    /* 8 bright colors */
-    "#595959", /* bright black */
-    "#972500", /* bright red */
-    "#00663f", /* bright green */
-    "#884900", /* bright yellow */
-    "#3548cf", /* bright blue */
-    "#531ab6", /* bright magenta */
-    "#005f5f", /* bright cyan */
-    "#ffffff", /* bright white */
-
-    [255] = 0,
-
-    /* defaults block (indices 256..259) — use Tinted bg */
-    "#000000", /* 256: cursor color (dark on light) */
-    "#999999", /* 257: reverse cursor */
-    "#000000", /* 258: default fg (operandi fg-main) */
-    "#fbf7f0", /* 259: default bg (operandi-tinted bg-main) */
-};
-
-/* Tinted variants */
-static const char *colorname_modus_vivendi_tinted[] = {
-    /* 8 normal colors (keep ANSI black truly black) */
-    "#000000", /* black */
-    "#ff5f59", /* red */
-    "#44bc44", /* green */
-    "#d0bc00", /* yellow */
-    "#2fafff", /* blue */
-    "#feacd0", /* magenta */
-    "#00d3d0", /* cyan */
-    "#ffffff", /* white (fg-main) */
-
-    /* 8 bright colors */
-    "#595959", /* bright black */
-    "#ff6b55", /* bright red */
-    "#11c777", /* bright green (tinted variant) */
-    "#fec43f", /* bright yellow */
-    "#79a8ff", /* bright blue */
-    "#b6a0ff", /* bright magenta */
-    "#6ae4b9", /* bright cyan */
-    "#ffffff", /* bright white */
-
-    [255] = 0,
-
-    /* defaults block (indices 256..259) */
-    "#e6e6e6", /* 256: cursor color */
-    "#555555", /* 257: reverse cursor */
-    "#ffffff", /* 258: default fg */
-    "#0d0e1c", /* 259: default bg */
-};
-
-static const char *colorname_modus_operandi_tinted[] = {
-    /* 8 normal colors (keep ANSI black truly black) */
-    "#000000", /* black */
-    "#a60000", /* red */
-    "#006300", /* green (tinted variant) */
-    "#6d5000", /* yellow (tinted variant) */
-    "#0031a9", /* blue */
-    "#721045", /* magenta */
-    "#00598b", /* cyan (tinted variant) */
-    "#000000", /* white (fg-main) */
-
-    /* 8 bright colors */
-    "#595959", /* bright black */
-    "#972500", /* bright red */
-    "#00603f", /* bright green (tinted variant) */
-    "#894000", /* bright yellow (tinted variant) */
-    "#3546c2", /* bright blue (tinted variant) */
-    "#531ab6", /* bright magenta */
-    "#005f5f", /* bright cyan */
-    "#ffffff", /* bright white */
-
-    [255] = 0,
-
-    /* defaults block (indices 256..259) */
-    "#000000", /* 256: cursor color */
-    "#999999", /* 257: reverse cursor */
-    "#000000", /* 258: default fg */
-    "#fbf7f0", /* 259: default bg */
-};
-
-/* Deuteranopia variants */
-static const char *colorname_modus_vivendi_deuteranopia[] = {
-    /* 8 normal colors */
-    "#000000", "#ff5f59", "#44bc44", "#cabf00",
-    "#2fafff", "#feacd0", "#00d3d0", "#ffffff",
-    /* 8 bright */
-    "#595959", "#ff6b55", "#00c06f", "#ffa00f",
-    "#79a8ff", "#b6a0ff", "#6ae4b9", "#ffffff",
-    [255] = 0,
-    /* defaults */
-    "#e6e6e6", "#555555", "#ffffff", "#000000",
-};
-
-static const char *colorname_modus_operandi_deuteranopia[] = {
-    /* 8 normal colors */
-    "#ffffff", "#a60000", "#006800", "#695500",
-    "#0031a9", "#721045", "#005e8b", "#000000",
-    /* 8 bright */
-    "#595959", "#972500", "#00663f", "#973300",
-    "#3548cf", "#531ab6", "#005f5f", "#ffffff",
-    [255] = 0,
-    /* defaults */
-    "#000000", "#999999", "#000000", "#ffffff",
-};
-
-/* Tritanopia variants */
-static const char *colorname_modus_vivendi_tritanopia[] = {
-    /* 8 normal colors */
-    "#000000", "#ff5f59", "#44bc44", "#cabf00",
-    "#2fafff", "#feacd0", "#00d3d0", "#ffffff",
-    /* 8 bright */
-    "#595959", "#ff6740", "#00c06f", "#ffa00f",
-    "#79a8ff", "#b6a0ff", "#6ae4b9", "#ffffff",
-    [255] = 0,
-    /* defaults */
-    "#e6e6e6", "#555555", "#ffffff", "#000000",
-};
-
-static const char *colorname_modus_operandi_tritanopia[] = {
-    /* 8 normal colors */
-    "#ffffff", "#a60000", "#006800", "#695500",
-    "#0031a9", "#721045", "#005e8b", "#000000",
-    /* 8 bright */
-    "#595959", "#b21100", "#00663f", "#973300",
-    "#3548cf", "#531ab6", "#005f5f", "#ffffff",
-    [255] = 0,
-    /* defaults */
-    "#000000", "#999999", "#000000", "#ffffff",
-};
 static const char *colorname[] = {
-    /* Start with Modus Vivendi Tinted */
-    "#0d0e1c", "#ff5f59", "#44bc44", "#d0bc00",
-    "#2fafff", "#feacd0", "#00d3d0", "#ffffff",
-    /* bright */
-    "#595959", "#ff6b55", "#11c777", "#fec43f",
-    "#79a8ff", "#b6a0ff", "#6ae4b9", "#ffffff",
+    /* 8 normal colors */
+    "black",
+    "red3",
+    "green3",
+    "yellow3",
+    "blue2",
+    "magenta3",
+    "cyan3",
+    "gray90",
+
+    /* 8 bright colors */
+    "gray50",
+    "red",
+    "green",
+    "yellow",
+    "#5c5cff",
+    "magenta",
+    "cyan",
+    "white",
+
     [255] = 0,
-    "#e6e6e6", "#555555", "#ffffff", "#0d0e1c",
+
+    /* more colors can be added after 255 to use with DefaultXX */
+    "#cccccc",
+    "#555555",
+    "gray90", /* default foreground colour */
+    "black", /* default background colour */
 };
 
 
@@ -384,9 +232,6 @@ static Shortcut shortcuts[] = {
     { ShiftMask,            XK_Insert,      clippaste,      {.i =  0} },
 	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
     { TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
-    { MODKEY,               XK_F5,          toggletheme,    {.i =  0} },
-    { MODKEY,               XK_F4,          togglevariant,  {.i =  0} },
-    { MODKEY,               XK_F6,          randomtheme,    {.i =  0} },
     { MODKEY,               XK_minus,       opacchange,     {.f = -0.05} },
     { MODKEY|ShiftMask,     XK_minus,       opacchange,     {.f = -0.05} },
     { MODKEY,               XK_plus,        opacchange,     {.f = +0.05} },
@@ -394,6 +239,10 @@ static Shortcut shortcuts[] = {
     { MODKEY|ShiftMask,     XK_equal,       opacchange,     {.f = +0.05} },
     { MODKEY,               XK_KP_Subtract, opacchange,     {.f = -0.05} },
     { MODKEY,               XK_KP_Add,      opacchange,     {.f = +0.05} },
+    /* External theme switch via Xresources */
+    { MODKEY,               XK_F5,          externalpipe,   {.v = (const char*[]){ "/bin/sh", "-c", "st-theme toggle", "externalpipe", NULL } } },
+    { MODKEY|ShiftMask,     XK_F5,          externalpipe,   {.v = (const char*[]){ "/bin/sh", "-c", "st-theme vivendi", "externalpipe", NULL } } },
+    { MODKEY|ShiftMask,     XK_F4,          externalpipe,   {.v = (const char*[]){ "/bin/sh", "-c", "st-theme operandi", "externalpipe", NULL } } },
     { ShiftMask,            XK_Page_Up,     kscrollup,      {.i = -1} },
     { ShiftMask,            XK_Page_Down,   kscrolldown,    {.i = -1} },
     { MODKEY,               XK_Page_Up,     kscrollup,      {.i = -1} },
@@ -681,3 +530,35 @@ static char ascii_printable[] =
 	" !\"#$%&'()*+,-./0123456789:;<=>?"
 	"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
 	"`abcdefghijklmnopqrstuvwxyz{|}~";
+/* Xresources support: map X resource keys to config variables */
+typedef enum { STRING, INTEGER, FLOAT } ResourceType;
+typedef struct {
+    const char *name;
+    ResourceType type;
+    void *dst;
+} ResourcePref;
+
+/* Xresources preferences to load at startup and on reload (SIGUSR1) */
+static ResourcePref resources[] = {
+    { "font",         STRING,  &font },
+    { "color0",       STRING,  &colorname[0] },
+    { "color1",       STRING,  &colorname[1] },
+    { "color2",       STRING,  &colorname[2] },
+    { "color3",       STRING,  &colorname[3] },
+    { "color4",       STRING,  &colorname[4] },
+    { "color5",       STRING,  &colorname[5] },
+    { "color6",       STRING,  &colorname[6] },
+    { "color7",       STRING,  &colorname[7] },
+    { "color8",       STRING,  &colorname[8] },
+    { "color9",       STRING,  &colorname[9] },
+    { "color10",      STRING,  &colorname[10] },
+    { "color11",      STRING,  &colorname[11] },
+    { "color12",      STRING,  &colorname[12] },
+    { "color13",      STRING,  &colorname[13] },
+    { "color14",      STRING,  &colorname[14] },
+    { "color15",      STRING,  &colorname[15] },
+    { "background",   STRING,  &colorname[259] },
+    { "foreground",   STRING,  &colorname[258] },
+    { "cursorColor",  STRING,  &colorname[256] },
+    { "alpha",        FLOAT,   NULL }, /* handled in x.c via winopacity */
+};
