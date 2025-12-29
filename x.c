@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <locale.h>
 #include <signal.h>
+#include <sys/types.h>
 #include <sys/select.h>
 #include <time.h>
 #include <unistd.h>
@@ -15,7 +16,6 @@
 #include <X11/Xft/Xft.h>
 #include <X11/XKBlib.h>
 #include <X11/extensions/Xrender.h>
-#include <X11/Xresource.h>
 
 char *argv0;
 #include "arg.h"
@@ -62,7 +62,6 @@ static void zoomabs(const Arg *);
 static void zoomreset(const Arg *);
 static void ttysend(const Arg *);
 static void opacchange(const Arg *);
-static void cyclefont(const Arg *);
 
 /* config.h for applying patches and the configuration. */
 #include "config.h"
@@ -166,7 +165,6 @@ static void xloadfonts(const char *, double);
 static void xunloadfont(Font *);
 static void xunloadfonts(void);
 static void xsetenv(void);
-static void sigusr1(int);
 static void xseturgency(int);
 static int  xloadvisual(void);
 static int evcol(XEvent *);
@@ -262,47 +260,6 @@ static char *opt_title = NULL;
 
 static uint buttons; /* bit field of pressed buttons */
 static double winopacity = 1.0; /* 0..1 */
-static int fontcycle_index = 0;
-
-/* Xresources loader */
-static void
-xrdb_load(void)
-{
-    XrmInitialize();
-    char *resm;
-    XrmDatabase db;
-    resm = XResourceManagerString(xw.dpy);
-    if (!resm)
-        return;
-    db = XrmGetStringDatabase(resm);
-    if (!db)
-        return;
-    for (size_t i = 0; i < sizeof(resources)/sizeof(resources[0]); i++) {
-        ResourcePref *r = &resources[i];
-        char fullname[128], classpath[128];
-        /* Only honor namespaced resources to avoid global color0.. leaks */
-        snprintf(fullname, sizeof(fullname), "st.%s", r->name);
-        snprintf(classpath, sizeof(classpath), "St.%s", r->name);
-        XrmValue v;
-        char *type = NULL;
-        if (XrmGetResource(db, fullname, classpath, &type, &v)) {
-            if (v.addr == NULL)
-                continue;
-            switch (r->type) {
-            case STRING:
-                *(char **)r->dst = xstrdup((char *)v.addr);
-                break;
-            case INTEGER:
-                *(int *)r->dst = strtoul((char *)v.addr, NULL, 10);
-                break;
-            case FLOAT:
-                winopacity = strtod((char *)v.addr, NULL);
-                break;
-            }
-        }
-    }
-}
-
 
 static void
 xapplyopacity(void)
@@ -412,27 +369,8 @@ zoomreset(const Arg *arg)
 void
 ttysend(const Arg *arg)
 {
-	ttywrite(arg->s, strlen(arg->s), 1);
+    ttywrite(arg->s, strlen(arg->s), 1);
 }
-
-void
-cyclefont(const Arg *arg)
-{
-    int step = arg ? arg->i : 1;
-    if (ncyclefonts <= 0)
-        return;
-    fontcycle_index = (fontcycle_index + step) % ncyclefonts;
-    if (fontcycle_index < 0)
-        fontcycle_index += ncyclefonts;
-
-    usedfont = (char *)cyclefonts[fontcycle_index];
-    xunloadfonts();
-    xloadfonts(usedfont, 0);
-    cresize(0, 0);
-    redraw();
-    xhints();
-}
-
 
 void
 opacchange(const Arg *arg)
@@ -1270,14 +1208,6 @@ xinit(int cols, int rows)
 		die("could not init fontconfig.\n");
 
     usedfont = (opt_font == NULL)? font : opt_font;
-    for (int i = 0; i < ncyclefonts; ++i) {
-        if (strcmp(usedfont, cyclefonts[i]) == 0) {
-            fontcycle_index = i;
-            break;
-        }
-    }
-    /* Xresources overrides */
-    xrdb_load();
     xloadfonts(usedfont, 0);
 
     /* colors */
@@ -2108,18 +2038,18 @@ run(void)
 		}
 		clock_gettime(CLOCK_MONOTONIC, &now);
 
-		if (FD_ISSET(ttyfd, &rfd))
-			ttyread();
+        if (FD_ISSET(ttyfd, &rfd))
+            ttyread();
 
-		xev = 0;
-		while (XPending(xw.dpy)) {
-			xev = 1;
-			XNextEvent(xw.dpy, &ev);
-			if (XFilterEvent(&ev, None))
-				continue;
-			if (handler[ev.type])
-				(handler[ev.type])(&ev);
-		}
+        xev = 0;
+        while (XPending(xw.dpy)) {
+            xev = 1;
+            XNextEvent(xw.dpy, &ev);
+            if (XFilterEvent(&ev, None))
+                continue;
+            if (handler[ev.type])
+                (handler[ev.type])(&ev);
+        }
 
 		/*
 		 * To reduce flicker and tearing, when new content or event
@@ -2183,8 +2113,6 @@ main(int argc, char *argv[])
 	xw.isfixed = False;
 	xsetcursor(cursorshape);
 
-    signal(SIGUSR1, sigusr1);
-
     ARGBEGIN {
 	case 'a':
 		allowaltscreen = 0;
@@ -2247,12 +2175,4 @@ run:
 	run();
 
 	return 0;
-}
-static void
-sigusr1(int sig)
-{
-    (void)sig;
-    xrdb_load();
-    xloadcols();
-    redraw();
 }

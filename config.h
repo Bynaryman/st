@@ -5,7 +5,7 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "Terminus:style=Regular:pixelsize=14:antialias=false:autohint=false";
+static char *font = "PxPlus IBM VGA8:style=Regular:pixelsize=14:antialias=true:autohint=false";
 static int borderpx = 2;
 
 /*
@@ -95,33 +95,34 @@ unsigned int tabspaces = 8;
 
 /* Terminal colors (16 first used in escape sequence) */
 static const char *colorname[] = {
+    /* Modus Vivendi tinted (hardcoded) */
     /* 8 normal colors */
-    "black",
-    "red3",
-    "green3",
-    "yellow3",
-    "blue2",
-    "magenta3",
-    "cyan3",
-    "gray90",
+    "#000000",
+    "#ff5f59",
+    "#44bc44",
+    "#d0bc00",
+    "#2fafff",
+    "#feacd0",
+    "#00d3d0",
+    "#ffffff",
 
     /* 8 bright colors */
-    "gray50",
-    "red",
-    "green",
-    "yellow",
-    "#5c5cff",
-    "magenta",
-    "cyan",
-    "white",
+    "#595959",
+    "#ff6b55",
+    "#11c777",
+    "#fec43f",
+    "#79a8ff",
+    "#b6a0ff",
+    "#6ae4b9",
+    "#ffffff",
 
     [255] = 0,
 
     /* more colors can be added after 255 to use with DefaultXX */
-    "#cccccc",
-    "#555555",
-    "gray90", /* default foreground colour */
-    "black", /* default background colour */
+    "#fec43f", /* cursor */
+    "#0d0e1c", /* reverse cursor */
+    "#e6e6e6", /* default foreground colour */
+    "#0d0e1c", /* default background colour */
 };
 
 
@@ -185,26 +186,14 @@ static MouseShortcut mshortcuts[] = {
 	{ XK_ANY_MOD,           Button5, ttysend,        {.s = "\005"} },
 };
 
-/*
- * Font cycling: list of font patterns to cycle at runtime.
- * First entry should match the default `font` above for a predictable start.
- * You can add/remove entries freely.
- */
-static const char *cyclefonts[] = {
-    "Terminus:style=Regular:pixelsize=14:antialias=false:autohint=false",
-    "MesloLGS Nerd Font Mono:size=12:antialias=true:autohint=true",
-    "Liberation Mono:pixelsize=12:antialias=true:autohint=true",
-};
-static const int ncyclefonts = sizeof(cyclefonts) / sizeof(cyclefonts[0]);
-
 /* Internal keyboard shortcuts. */
 #define MODKEY Mod1Mask
 #define TERMMOD (ControlMask|ShiftMask)
 
 /* External pipe helpers (dmenu URL opener/copy, copy output) */
-static char *openurlcmd[] = { "/bin/sh", "-c", "st-urlhandler -o", "externalpipe", NULL };
-static char *copyurlcmd[] = { "/bin/sh", "-c", "st-urlhandler -c", "externalpipe", NULL };
-static char *copyoutput[] = { "/bin/sh", "-c", "st-copyout", "externalpipe", NULL };
+static char *openurlcmd[] = { "/bin/sh", "-c", "$HOME/.dotfiles/.st/bin/st-urlhandler -o", "externalpipe", NULL };
+static char *copyurlcmd[] = { "/bin/sh", "-c", "$HOME/.dotfiles/.st/bin/st-urlhandler -c", "externalpipe", NULL };
+static char *copyoutput[] = { "/bin/sh", "-c", "$HOME/.dotfiles/.st/bin/st-copyout", "externalpipe", NULL };
 
 static Shortcut shortcuts[] = {
 	/* mask                 keysym          function        argument */
@@ -227,6 +216,8 @@ static Shortcut shortcuts[] = {
     { Mod1Mask|ShiftMask,   XK_D,           zoom,           {.f = -2} },
     { TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
     { TERMMOD,              XK_V,           clippaste,      {.i =  0} },
+    /* Alt-based clipboard like your previous build */
+    { MODKEY,               XK_c,           clipcopy,       {.i =  0} },
     { MODKEY,               XK_v,           clippaste,      {.i =  0} },
     { TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
     { ShiftMask,            XK_Insert,      clippaste,      {.i =  0} },
@@ -239,10 +230,6 @@ static Shortcut shortcuts[] = {
     { MODKEY|ShiftMask,     XK_equal,       opacchange,     {.f = +0.05} },
     { MODKEY,               XK_KP_Subtract, opacchange,     {.f = -0.05} },
     { MODKEY,               XK_KP_Add,      opacchange,     {.f = +0.05} },
-    /* External theme switch via Xresources */
-    { MODKEY,               XK_F5,          externalpipe,   {.v = (const char*[]){ "/bin/sh", "-c", "st-theme toggle", "externalpipe", NULL } } },
-    { MODKEY|ShiftMask,     XK_F5,          externalpipe,   {.v = (const char*[]){ "/bin/sh", "-c", "st-theme vivendi", "externalpipe", NULL } } },
-    { MODKEY|ShiftMask,     XK_F4,          externalpipe,   {.v = (const char*[]){ "/bin/sh", "-c", "st-theme operandi", "externalpipe", NULL } } },
     { ShiftMask,            XK_Page_Up,     kscrollup,      {.i = -1} },
     { ShiftMask,            XK_Page_Down,   kscrolldown,    {.i = -1} },
     { MODKEY,               XK_Page_Up,     kscrollup,      {.i = -1} },
@@ -256,9 +243,6 @@ static Shortcut shortcuts[] = {
     { MODKEY,               XK_l,           externalpipe,   {.v = openurlcmd } },
     { MODKEY,               XK_y,           externalpipe,   {.v = copyurlcmd } },
     { MODKEY,               XK_o,           externalpipe,   {.v = copyoutput } },
-    /* Cycle fonts at runtime */
-    { MODKEY,               XK_F7,          cyclefont,      {.i = -1} },
-    { MODKEY,               XK_F8,          cyclefont,      {.i = +1} },
 };
 
 /*
@@ -530,35 +514,3 @@ static char ascii_printable[] =
 	" !\"#$%&'()*+,-./0123456789:;<=>?"
 	"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
 	"`abcdefghijklmnopqrstuvwxyz{|}~";
-/* Xresources support: map X resource keys to config variables */
-typedef enum { STRING, INTEGER, FLOAT } ResourceType;
-typedef struct {
-    const char *name;
-    ResourceType type;
-    void *dst;
-} ResourcePref;
-
-/* Xresources preferences to load at startup and on reload (SIGUSR1) */
-static ResourcePref resources[] = {
-    { "font",         STRING,  &font },
-    { "color0",       STRING,  &colorname[0] },
-    { "color1",       STRING,  &colorname[1] },
-    { "color2",       STRING,  &colorname[2] },
-    { "color3",       STRING,  &colorname[3] },
-    { "color4",       STRING,  &colorname[4] },
-    { "color5",       STRING,  &colorname[5] },
-    { "color6",       STRING,  &colorname[6] },
-    { "color7",       STRING,  &colorname[7] },
-    { "color8",       STRING,  &colorname[8] },
-    { "color9",       STRING,  &colorname[9] },
-    { "color10",      STRING,  &colorname[10] },
-    { "color11",      STRING,  &colorname[11] },
-    { "color12",      STRING,  &colorname[12] },
-    { "color13",      STRING,  &colorname[13] },
-    { "color14",      STRING,  &colorname[14] },
-    { "color15",      STRING,  &colorname[15] },
-    { "background",   STRING,  &colorname[259] },
-    { "foreground",   STRING,  &colorname[258] },
-    { "cursorColor",  STRING,  &colorname[256] },
-    { "alpha",        FLOAT,   NULL }, /* handled in x.c via winopacity */
-};
