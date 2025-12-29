@@ -7,8 +7,12 @@
  */
 static char *font = "PxPlus IBM VGA8:style=Regular:pixelsize=20:antialias=true:autohint=false";
 static int borderpx = 2;
-static double alpha = 0.95;
-static double alphaUnfocused = 0.8;
+static double alpha = 0.93;
+static double alphaUnfocused = 0.9;
+static double alphaDark = 0.93;
+static double alphaUnfocusedDark = 0.9;
+static double alphaLight = 0.05;
+static double alphaUnfocusedLight = 0.03;
 
 /*
  * What program is execed by st depends of these precedence rules:
@@ -109,7 +113,7 @@ static const char *colorname[] = {
     "#ffffff",
 
     /* 8 bright colors */
-    "#595959",
+    "#a6a6a6",
     "#ff6b55",
     "#11c777",
     "#fec43f",
@@ -125,17 +129,86 @@ static const char *colorname[] = {
     "#0d0e1c", /* reverse cursor */
     "#e6e6e6", /* default foreground colour */
     "#0d0e1c", /* default background colour */
+    "#2b3045", /* selection background */
+};
+
+static const char *colorname_light[] = {
+    /* Modus Operandi tinted (hardcoded) */
+    /* 8 normal colors */
+    "#000000",
+    "#a60000",
+    "#006800",
+    "#7a4f00",
+    "#0037b8",
+    "#721045",
+    "#005f8b",
+    "#ffffff",
+
+    /* 8 bright colors */
+    "#2f2f2f",
+    "#b00000",
+    "#006a3f",
+    "#8a5a00",
+    "#003ea8",
+    "#6a2dc0",
+    "#006b78",
+    "#ffffff",
+
+    [255] = 0,
+
+    /* more colors can be added after 255 to use with DefaultXX */
+    "#000000", /* cursor */
+    "#e9ddca", /* reverse cursor */
+    "#000000", /* default foreground colour */
+    "#e9ddca", /* default background colour */
+    "#d4c4b0", /* selection background */
+};
+
+/* Keep in sync with colorname[] */
+static const char *colorname_dark[] = {
+    /* Modus Vivendi tinted (hardcoded) */
+    /* 8 normal colors */
+    "#000000",
+    "#ff5f59",
+    "#44bc44",
+    "#d0bc00",
+    "#2fafff",
+    "#feacd0",
+    "#00d3d0",
+    "#ffffff",
+
+    /* 8 bright colors */
+    "#a6a6a6",
+    "#ff6b55",
+    "#11c777",
+    "#fec43f",
+    "#79a8ff",
+    "#b6a0ff",
+    "#6ae4b9",
+    "#ffffff",
+
+    [255] = 0,
+
+    /* more colors can be added after 255 to use with DefaultXX */
+    "#fec43f", /* cursor */
+    "#0d0e1c", /* reverse cursor */
+    "#e6e6e6", /* default foreground colour */
+    "#0d0e1c", /* default background colour */
+    "#2b3045", /* selection background */
 };
 
 
 /*
  * Default colors (colorname index)
- * foreground, background, cursor, reverse cursor
+ * foreground, background, cursor, reverse cursor, selection
  */
 unsigned int defaultfg = 258;
 unsigned int defaultbg = 259;
 unsigned int defaultcs = 256;
 static unsigned int defaultrcs = 257;
+unsigned int selectionbg = 260;
+unsigned int selectionfg = 258;
+static int ignoreselfg = 1;
 unsigned int bg = 259;
 unsigned int bgUnfocused = 259;
 
@@ -234,6 +307,8 @@ static Shortcut shortcuts[] = {
     { MODKEY|ShiftMask,     XK_equal,       opacchange,     {.f = +0.05} },
     { MODKEY,               XK_KP_Subtract, opacchange,     {.f = -0.05} },
     { MODKEY,               XK_KP_Add,      opacchange,     {.f = +0.05} },
+    /* Toggle Modus Vivendi/Operandi */
+    { MODKEY,               XK_F5,          theme,          {.i = -1} },
     { ShiftMask,            XK_Page_Up,     kscrollup,      {.i = -1} },
     { ShiftMask,            XK_Page_Down,   kscrolldown,    {.i = -1} },
     { MODKEY,               XK_Page_Up,     kscrollup,      {.i = -1} },

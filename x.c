@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <locale.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/select.h>
 #include <time.h>
@@ -62,6 +63,7 @@ static void zoomabs(const Arg *);
 static void zoomreset(const Arg *);
 static void ttysend(const Arg *);
 static void opacchange(const Arg *);
+static void theme(const Arg *);
 
 /* config.h for applying patches and the configuration. */
 #include "config.h"
@@ -262,12 +264,11 @@ static char *opt_title = NULL;
 static uint buttons; /* bit field of pressed buttons */
 static double winopacity = 1.0; /* 0..1 */
 static int focused = 0;
+static int theme_is_light = 0;
 
 static void
 xapplyopacity(void)
 {
-	if (xdepth == 32)
-		return;
     Atom prop = XInternAtom(xw.dpy, "_NET_WM_WINDOW_OPACITY", False);
     unsigned long value = (unsigned long)(winopacity * 0xfffffffful);
     XChangeProperty(xw.dpy, xw.win, prop, XA_CARDINAL, 32, PropModeReplace,
@@ -380,13 +381,61 @@ void
 opacchange(const Arg *arg)
 {
 	double d = arg->f;
-	alpha += d;
-	alphaUnfocused += d;
-	if (alpha < 0.1) alpha = 0.1;
-	if (alpha > 1.0) alpha = 1.0;
-	if (alphaUnfocused < 0.1) alphaUnfocused = 0.1;
-	if (alphaUnfocused > 1.0) alphaUnfocused = 1.0;
+	if (theme_is_light) {
+		alphaLight += d;
+		alphaUnfocusedLight += d;
+		if (alphaLight < 0.1) alphaLight = 0.1;
+		if (alphaLight > 1.0) alphaLight = 1.0;
+		if (alphaUnfocusedLight < 0.1) alphaUnfocusedLight = 0.1;
+		if (alphaUnfocusedLight > 1.0) alphaUnfocusedLight = 1.0;
+		alpha = alphaLight;
+		alphaUnfocused = alphaUnfocusedLight;
+	} else {
+		alphaDark += d;
+		alphaUnfocusedDark += d;
+		if (alphaDark < 0.1) alphaDark = 0.1;
+		if (alphaDark > 1.0) alphaDark = 1.0;
+		if (alphaUnfocusedDark < 0.1) alphaUnfocusedDark = 0.1;
+		if (alphaUnfocusedDark > 1.0) alphaUnfocusedDark = 1.0;
+		alpha = alphaDark;
+		alphaUnfocused = alphaUnfocusedDark;
+	}
 	xloadalpha();
+	xapplyopacity();
+	redraw();
+}
+
+static void
+theme(const Arg *arg)
+{
+	int target = theme_is_light;
+
+	if (arg) {
+		if (arg->i == 0)
+			target = 0;
+		else if (arg->i == 1)
+			target = 1;
+		else
+			target = !theme_is_light;
+	} else {
+		target = !theme_is_light;
+	}
+
+	if (target == theme_is_light)
+		return;
+
+	if (target) {
+		alpha = alphaLight;
+		alphaUnfocused = alphaUnfocusedLight;
+	} else {
+		alpha = alphaDark;
+		alphaUnfocused = alphaUnfocusedDark;
+	}
+
+	memcpy(colorname, target ? colorname_light : colorname_dark,
+		sizeof(colorname_dark));
+	theme_is_light = target;
+	xloadcols();
 	xapplyopacity();
 	redraw();
 }
@@ -857,18 +906,29 @@ static void
 xloadalpha(void)
 {
 	int bgidx = focused ? (int)bg : (int)bgUnfocused;
-	double usedalpha = focused ? alpha : alphaUnfocused;
+	double focusedalpha = theme_is_light ? alphaLight : alphaDark;
+	double unfocusedalpha = theme_is_light ? alphaUnfocusedLight : alphaUnfocusedDark;
+	double usedalpha = focused ? focusedalpha : unfocusedalpha;
 
 	if (bgidx != (int)defaultbg) {
 		XftColorFree(xw.dpy, xw.vis, xw.cmap, &dc.col[defaultbg]);
-		if (xloadcolor(bgidx, NULL, &dc.col[defaultbg])) {
+		if (!xloadcolor(bgidx, NULL, &dc.col[defaultbg])) {
 			die("could not allocate color %d\n", bgidx);
+		}
+	}
+	if ((int)selectionbg != (int)defaultbg) {
+		XftColorFree(xw.dpy, xw.vis, xw.cmap, &dc.col[selectionbg]);
+		if (!xloadcolor(selectionbg, NULL, &dc.col[selectionbg])) {
+			die("could not allocate color %d\n", selectionbg);
 		}
 	}
 	winopacity = usedalpha;
 	dc.col[defaultbg].color.alpha = (unsigned short)(0xffff * usedalpha);
 	dc.col[defaultbg].pixel &= 0x00FFFFFF;
 	dc.col[defaultbg].pixel |= (unsigned char)(0xff * usedalpha) << 24;
+	dc.col[selectionbg].color.alpha = (unsigned short)(0xffff * usedalpha);
+	dc.col[selectionbg].pixel &= 0x00FFFFFF;
+	dc.col[selectionbg].pixel |= (unsigned char)(0xff * usedalpha) << 24;
 }
 
 void
@@ -1557,6 +1617,12 @@ xdrawglyphfontspecs(const XftGlyphFontSpec *specs, Glyph base, int len, int x, i
 		bg = temp;
 	}
 
+	if (base.mode & ATTR_SELECTED) {
+		bg = &dc.col[selectionbg];
+		if (!ignoreselfg)
+			fg = &dc.col[selectionfg];
+	}
+
 	if (base.mode & ATTR_BLINK && win.mode & MODE_BLINK)
 		fg = bg;
 
@@ -1623,7 +1689,7 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
 
 	/* remove the old cursor */
 	if (selected(ox, oy))
-		og.mode ^= ATTR_REVERSE;
+		og.mode |= ATTR_SELECTED;
 	xdrawglyph(og, ox, oy);
 
 	if (IS_SET(MODE_HIDE))
@@ -1636,23 +1702,13 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
 
 	if (IS_SET(MODE_REVERSE)) {
 		g.mode |= ATTR_REVERSE;
+		g.fg = defaultcs;
 		g.bg = defaultfg;
-		if (selected(cx, cy)) {
-			drawcol = dc.col[defaultcs];
-			g.fg = defaultrcs;
-		} else {
-			drawcol = dc.col[defaultrcs];
-			g.fg = defaultcs;
-		}
+		drawcol = dc.col[defaultrcs];
 	} else {
-		if (selected(cx, cy)) {
-			g.fg = defaultfg;
-			g.bg = defaultrcs;
-		} else {
-			g.fg = defaultbg;
-			g.bg = defaultcs;
-		}
-		drawcol = dc.col[g.bg];
+		g.fg = defaultbg;
+		g.bg = defaultcs;
+		drawcol = dc.col[defaultcs];
 	}
 
 	/* draw the new one */
@@ -1767,7 +1823,7 @@ xdrawline(Line line, int x1, int y1, int x2)
 		if (new.mode == ATTR_WDUMMY)
 			continue;
 		if (selected(x, y1))
-			new.mode ^= ATTR_REVERSE;
+			new.mode |= ATTR_SELECTED;
 		if (i > 0 && ATTRCMP(base, new)) {
 			xdrawglyphfontspecs(specs, base, i, ox, y1);
 			specs += i;
