@@ -5,7 +5,7 @@ urlregex="(((http|https|gopher|gemini|ftp|ftps|git)://|www\\.)[a-zA-Z0-9.]*[:;a-
 urls="$(sed 's/.*│//g' | tr -d '\n' | # First remove linebreaks and mutt sidebars:
 	grep -aEo "$urlregex" | # grep only urls as defined above.
 	uniq | # Ignore neighboring duplicates.
-	sed "s/\(\.\|,\|;\|\!\\|\?\)$//;\n\ts/^www./http:\/\/www\./")" # xdg-open will not detect url without http
+	sed -e 's/[.,;!?]$//' -e 's/^www\./http:\/\/www\./')" # xdg-open will not detect url without http
 
 [ -z "$urls" ] && exit 1
 
@@ -16,4 +16,3 @@ while getopts "hoc" o; do case "${o}" in
 	c) echo "$urls" | dmenu -i -p 'Copy which url?' -l 10 | tr -d '\n' | xclip -selection clipboard ;;
 	*) printf "Invalid option: -%s\\n" "$OPTARG" && exit 1 ;;
 esac done
-
