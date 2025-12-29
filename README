@@ -28,7 +28,27 @@ the st terminfo entry with the following command:
 
 See the man page for additional details.
 
+Local changes (this fork)
+-------------------------
+- Retro defaults: PxPlus IBM VGA8 font with antialias enabled for crisp VGA-style glyphs.
+- Modus tinted palettes: dark (Vivendi) and light (Operandi) hardcoded in config.h.
+  Main inspiration: https://protesilaos.com/emacs/modus-themes
+- Quick light/dark toggle for projection use (Alt+F5).
+- Per-theme transparency with a smaller focus/unfocus delta.
+- Dedicated selection colors with alpha-aware selection background.
+- Palette-index friendly: prompts using ANSI color indices adapt automatically to the current theme.
+
+Example: quick light/dark toggle (Alt+F5)
+    /* config.h */
+    { MODKEY,               XK_F5,          theme,          {.i = -1} },
+
+Example: per-theme alpha controls (tune for your display)
+    /* config.h */
+    static double alphaDark = 0.93;
+    static double alphaUnfocusedDark = 0.90;
+    static double alphaLight = 0.05;
+    static double alphaUnfocusedLight = 0.03;
+
 Credits
 -------
 Based on Aurélien APTEL <aurelien dot aptel at gmail dot com> bt source code.
-
