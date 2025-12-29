@@ -5,8 +5,10 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "PxPlus IBM VGA8:style=Regular:pixelsize=14:antialias=true:autohint=false";
+static char *font = "PxPlus IBM VGA8:style=Regular:pixelsize=20:antialias=true:autohint=false";
 static int borderpx = 2;
+static double alpha = 0.95;
+static double alphaUnfocused = 0.8;
 
 /*
  * What program is execed by st depends of these precedence rules:
@@ -134,6 +136,8 @@ unsigned int defaultfg = 258;
 unsigned int defaultbg = 259;
 unsigned int defaultcs = 256;
 static unsigned int defaultrcs = 257;
+unsigned int bg = 259;
+unsigned int bgUnfocused = 259;
 
 /*
  * Default shape of cursor

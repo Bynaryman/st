@@ -160,6 +160,7 @@ static void cresize(int, int);
 static void xresize(int, int);
 static void xhints(void);
 static int xloadcolor(int, const char *, Color *);
+static void xloadalpha(void);
 static int xloadfont(Font *, FcPattern *);
 static void xloadfonts(const char *, double);
 static void xunloadfont(Font *);
@@ -260,10 +261,13 @@ static char *opt_title = NULL;
 
 static uint buttons; /* bit field of pressed buttons */
 static double winopacity = 1.0; /* 0..1 */
+static int focused = 0;
 
 static void
 xapplyopacity(void)
 {
+	if (xdepth == 32)
+		return;
     Atom prop = XInternAtom(xw.dpy, "_NET_WM_WINDOW_OPACITY", False);
     unsigned long value = (unsigned long)(winopacity * 0xfffffffful);
     XChangeProperty(xw.dpy, xw.win, prop, XA_CARDINAL, 32, PropModeReplace,
@@ -369,17 +373,22 @@ zoomreset(const Arg *arg)
 void
 ttysend(const Arg *arg)
 {
-    ttywrite(arg->s, strlen(arg->s), 1);
+	ttywrite(arg->s, strlen(arg->s), 1);
 }
 
 void
 opacchange(const Arg *arg)
 {
-    double d = arg->f;
-    winopacity += d;
-    if (winopacity < 0.1) winopacity = 0.1;
-    if (winopacity > 1.0) winopacity = 1.0;
-    xapplyopacity();
+	double d = arg->f;
+	alpha += d;
+	alphaUnfocused += d;
+	if (alpha < 0.1) alpha = 0.1;
+	if (alpha > 1.0) alpha = 1.0;
+	if (alphaUnfocused < 0.1) alphaUnfocused = 0.1;
+	if (alphaUnfocused > 1.0) alphaUnfocused = 1.0;
+	xloadalpha();
+	xapplyopacity();
+	redraw();
 }
 
 int
@@ -844,6 +853,24 @@ xloadcolor(int i, const char *name, Color *ncolor)
 	return XftColorAllocName(xw.dpy, xw.vis, xw.cmap, name, ncolor);
 }
 
+static void
+xloadalpha(void)
+{
+	int bgidx = focused ? (int)bg : (int)bgUnfocused;
+	double usedalpha = focused ? alpha : alphaUnfocused;
+
+	if (bgidx != (int)defaultbg) {
+		XftColorFree(xw.dpy, xw.vis, xw.cmap, &dc.col[defaultbg]);
+		if (xloadcolor(bgidx, NULL, &dc.col[defaultbg])) {
+			die("could not allocate color %d\n", bgidx);
+		}
+	}
+	winopacity = usedalpha;
+	dc.col[defaultbg].color.alpha = (unsigned short)(0xffff * usedalpha);
+	dc.col[defaultbg].pixel &= 0x00FFFFFF;
+	dc.col[defaultbg].pixel |= (unsigned char)(0xff * usedalpha) << 24;
+}
+
 void
 xloadcols(void)
 {
@@ -866,8 +893,7 @@ xloadcols(void)
             else
                 die("could not allocate color %d\n", i);
         }
-    /* apply per-pixel alpha to background if supported */
-    dc.col[defaultbg].color.alpha = (unsigned short)(0xffff * winopacity);
+    xloadalpha();
     loaded = 1;
 }
 
@@ -897,8 +923,11 @@ xsetcolorname(int x, const char *name)
 
     XftColorFree(xw.dpy, xw.vis, xw.cmap, &dc.col[x]);
     dc.col[x] = ncolor;
-    if (x == (int)defaultbg)
+    if (x == (int)defaultbg) {
         dc.col[x].color.alpha = (unsigned short)(0xffff * winopacity);
+        dc.col[x].pixel &= 0x00FFFFFF;
+        dc.col[x].pixel |= (unsigned char)(0xff * winopacity) << 24;
+    }
 
     return 0;
 }
@@ -1856,12 +1885,24 @@ focus(XEvent *ev)
 		xseturgency(0);
 		if (IS_SET(MODE_FOCUS))
 			ttywrite("\033[I", 3, 0);
+		if (!focused) {
+			focused = 1;
+			xloadalpha();
+			xapplyopacity();
+			redraw();
+		}
 	} else {
 		if (xw.ime.xic)
 			XUnsetICFocus(xw.ime.xic);
 		win.mode &= ~MODE_FOCUSED;
 		if (IS_SET(MODE_FOCUS))
 			ttywrite("\033[O", 3, 0);
+		if (focused) {
+			focused = 0;
+			xloadalpha();
+			xapplyopacity();
+			redraw();
+		}
 	}
 }
 
